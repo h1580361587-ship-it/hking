@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🏆 人生成就系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: #0d0d1a;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 560px;
+            padding-bottom: 40px;
+        }
+
+        /* ===== 顶部 ===== */
+        .header {
+            background: linear-gradient(135deg, #1a1a3e 0%, #2d1b69 100%);
+            border-radius: 24px;
+            padding: 32px 24px 28px;
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .header::before {
+            content: '🏆';
+            position: absolute;
+            right: -10px;
+            top: -10px;
+            font-size: 80px;
+            opacity: 0.08;
+        }
+        .header h1 {
+            font-size: 30px;
+            color: #fff;
+            font-weight: 800;
+            letter-spacing: 2px;
+        }
+        .header .sub {
+            color: rgba(255,255,255,0.45);
+            font-size: 14px;
+            margin-top: 6px;
+        }
+
+        /* ===== 进度总览 ===== */
+        .overview {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 18px 20px;
+            margin-top: 16px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .ov-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .ov-header .rank {
+            font-size: 14px;
+            color: rgba(255,255,255,0.5);
+        }
+        .ov-header .rank strong {
+            color: #ffd700;
+        }
+        .ov-header .pct-big {
+            font-size: 26px;
+            font-weight: 800;
+            color: #ffd700;
+        }
+        .ov-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .ov-bar .fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffd700, #ff6b6b);
+            border-radius: 6px;
+            transition: width 0.8s ease;
+        }
+        .ov-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+            color: rgba(255,255,255,0.4);
+            font-size: 13px;
+        }
+        .ov-stats span strong { font-size: 16px; }
+        .ov-stats .done-s strong { color: #4caf50; }
+        .ov-stats .todo-s strong { color: #ff9800; }
+
+        /* ===== 筛选 ===== */
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            margin: 16px 0;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: transparent;
+            color: rgba(255,255,255,0.4);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .filter-btn.active {
+            background: rgba(255,215,0,0.12);
+            border-color: rgba(255,215,0,0.3);
+            color: #ffd700;
+        }
+        .filter-btn:hover {
+            border-color: rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.7);
+        }
+
+        .section-label {
+            color: rgba(255,255,255,0.3);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 8px 0 14px;
+        }
+
+        /* ===== 成就卡片 ===== */
+        .achieve-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .achieve-card {
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(8px);
+            border-radius: 18px;
+            padding: 20px 20px 18px;
+            border: 1px solid rgba(255,255,255,0.06);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .achieve-card:hover {
+            background: rgba(255,255,255,0.07);
+            transform: translateX(4px);
+        }
+
+        /* 左侧金色装饰条 - 完成时显示 */
+        .achieve-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 0 4px 4px 0;
+            transition: 0.4s;
+        }
+        .achieve-card.done::before {
+            background: linear-gradient(180deg, #ffd700, #ff9800);
+            width: 5px;
+            box-shadow: 0 0 20px rgba(255,215,0,0.2);
+        }
+
+        /* 已完成样式 */
+        .achieve-card.done {
+            background: rgba(76, 175, 80, 0.06);
+            border-color: rgba(76, 175, 80, 0.15);
+        }
+
+        /* ===== 成就内容布局 ===== */
+        .card-top {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        /* 奖杯图标 - 大号 */
+        .trophy-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            flex-shrink: 0;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            transition: 0.3s;
+        }
+        .achieve-card.done .trophy-icon {
+            background: linear-gradient(135deg, #ffd700, #ff9800);
+            border-color: #ffd700;
+            box-shadow: 0 4px 24px rgba(255,215,0,0.25);
+        }
+
+        .card-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* 成就名称 */
+        .achieve-name {
+            font-size: 19px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.92);
+            letter-spacing: 0.5px;
+            transition: 0.3s;
+        }
+        .achieve-card.done .achieve-name {
+            color: #ffd700;
+        }
+
+        /* 达成条件 */
+        .achieve-condition {
+            font-size: 14px;
+            color: rgba(255,255,255,0.4);
+            margin-top: 6px;
+            line-height: 1.5;
+            padding-right: 10px;
+        }
+        .achieve-card.done .achieve-condition {
+            color: rgba(255,255,255,0.35);
+        }
+
+        /* ===== 底部信息 ===== */
+        .card-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255,255,255,0.04);
+        }
+
+        /* 完成率数据 */
+        .completion-rate {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+        .rate-bar-wrap {
+            width: 80px;
+            height: 4px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .rate-bar-wrap .rate-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #4caf50, #8bc34a);
+            transition: width 0.6s ease;
+        }
+        .rate-text {
+            color: rgba(255,255,255,0.5);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .rate-text .pct-num {
+            color: #4caf50;
+            font-weight: 700;
+        }
+
+        /* 状态标签 + 操作 */
+        .card-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .status-tag {
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+        .status-tag.todo {
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.3);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .status-tag.done {
+            background: rgba(76,175,80,0.12);
+            color: #4caf50;
+            border: 1px solid rgba(76,175,80,0.2);
+        }
+
+        .mark-btn {
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: none;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.25s;
+        }
+        .mark-btn.complete {
+            background: rgba(255,215,0,0.12);
+            color: #ffd700;
+            border: 1px solid rgba(255,215,0,0.2);
+        }
+        .mark-btn.complete:hover {
+            background: rgba(255,215,0,0.2);
+        }
+        .mark-btn.undo {
+            background: rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.5);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .mark-btn.undo:hover {
+            background: rgba(255,82,82,0.1);
+            color: #ff5252;
+            border-color: rgba(255,82,82,0.2);
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.1);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+        .delete-btn:hover {
+            color: #ff5252;
+            background: rgba(255,82,82,0.1);
+        }
+
+        /* ===== 添加区域 ===== */
+        .add-section {
+            background: rgba(255,255,255,0.04);
+            border-radius: 18px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .add-section .add-label {
+            color: rgba(255,255,255,0.4);
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+        .add-name-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .add-name-row input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            font-size: 15px;
+            outline: none;
+            background: rgba(255,255,255,0.04);
+            color: white;
+            transition: 0.25s;
+        }
+        .add-name-row input::placeholder { color: rgba(255,255,255,0.2); }
+        .add-name-row input:focus {
+            border-color: rgba(255,215,0,0.4);
+            background: rgba(255,255,255,0.06);
+        }
+
+        .add-desc-row {
+            margin-bottom: 10px;
+        }
+        .add-desc-row input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            font-size: 14px;
+            outline: none;
+            background: rgba(255,255,255,0.04);
+            color: rgba(255,255,255,0.7);
+            transition: 0.25s;
+        }
+        .add-desc-row input::placeholder { color: rgba(255,255,255,0.2); }
+        .add-desc-row input:focus {
+            border-color: rgba(255,215,0,0.4);
+            background: rgba(255,255,255,0.06);
+        }
+
+        .add-rate-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .add-rate-row input {
+            width: 80px;
+            padding: 10px 12px;
+            border: 2px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            background: rgba(255,255,255,0.04);
+            color: white;
+            text-align: center;
+            transition: 0.25s;
+        }
+        .add-rate-row input:focus {
+            border-color: rgba(255,215,0,0.4);
+        }
+        .add-rate-row input::placeholder { color: rgba(255,255,255,0.2); }
+        .add-rate-row span {
+            color: rgba(255,255,255,0.3);
+            font-size: 14px;
+        }
+        .add-rate-row button {
+            margin-left: auto;
+            padding: 10px 24px;
+            background: linear-gradient(135deg, #ffd700, #ff9800);
+            color: #1a1a2e;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .add-rate-row button:active { transform: scale(0.95); }
+
+        /* ===== 预设成就 ===== */
+        .preset-section {
+            margin-bottom: 16px;
+        }
+        .preset-section .p-label {
+            color: rgba(255,255,255,0.3);
+            font-size: 12px;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+        .preset-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .preset-item {
+            padding: 10px 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.06);
+            background: rgba(255,255,255,0.03);
+            color: rgba(255,255,255,0.6);
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.2s;
+            text-align: left;
+            line-height: 1.3;
+        }
+        .preset-item:hover {
+            background: rgba(255,215,0,0.08);
+            border-color: rgba(255,215,0,0.2);
+            color: #ffd700;
+        }
+        .preset-item .p-name { font-weight: 600; }
+        .preset-item .p-rate {
+            font-size: 11px;
+            color: rgba(255,255,255,0.3);
+            margin-top: 2px;
+        }
+
+        /* ===== 空状态 ===== */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(255,255,255,0.2);
+        }
+        .empty-state .icon { font-size: 64px; margin-bottom: 12px; }
+        .empty-state p { font-size: 16px; }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 480px) {
+            body { padding: 12px; }
+            .header { padding: 24px 18px 20px; }
+            .header h1 { font-size: 24px; }
+            .trophy-icon { width: 44px; height: 44px; font-size: 22px; }
+            .achieve-name { font-size: 17px; }
+            .achieve-condition { font-size: 13px; }
+            .card-bottom { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .card-actions { width: 100%; justify-content: flex-end; }
+            .add-name-row { flex-direction: column; }
+            .add-rate-row { flex-wrap: wrap; }
+        }
+
+        /* ===== 完成弹窗 ===== */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: rgba(76, 175, 80, 0.95);
+            backdrop-filter: blur(12px);
+            color: white;
+            padding: 16px 28px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 8px 40px rgba(76, 175, 80, 0.3);
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 999;
+            pointer-events: none;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app">
+        <!-- ===== 顶部 ===== -->
+        <div class="header">
+            <h1>🏆 人生成就系统</h1>
+            <div class="sub">解锁你的人生里程碑</div>
+
+            <div class="overview">
+                <div class="ov-header">
+                    <div class="rank">🏅 成就等级 <strong id="rankDisplay">青铜</strong></div>
+                    <div class="pct-big" id="overallPct">0%</div>
+                </div>
+                <div class="ov-bar">
+                    <div class="fill" id="overallBar" style="width: 0%;"></div>
+                </div>
+                <div class="ov-stats">
+                    <span class="done-s">🏆 已解锁 <strong id="doneTotal">0</strong></span>
+                    <span class="todo-s">🔒 未解锁 <strong id="todoTotal">0</strong></span>
+                    <span>📊 总计 <strong id="grandTotal">0</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 添加自定义成就 ===== -->
+        <div class="add-section">
+            <div class="add-label">✏️ 自定义成就</div>
+            <div class="add-name-row">
+                <input type="text" id="inputName" placeholder="成就名称，如：学有所成！" maxlength="30" />
+            </div>
+            <div class="add-desc-row">
+                <input type="text" id="inputDesc" placeholder="达成条件，如：成功通过高等教育，拿到大学毕业证书" maxlength="100" />
+            </div>
+            <div class="add-rate-row">
+                <input type="number" id="inputRate" placeholder="38" min="0" max="100" />
+                <span>% 的人已完成</span>
+                <button id="addCustomBtn">➕ 添加成就</button>
+            </div>
+        </div>
+
+        <!-- ===== 预设推荐 ===== -->
+        <div class="preset-section">
+            <div class="p-label">📌 推荐成就（点击一键添加）</div>
+            <div class="preset-grid" id="presetGrid"></div>
+        </div>
+
+        <!-- ===== 筛选 ===== -->
+        <div class="filter-bar">
+            <button class="filter-btn active" data-filter="all">全部</button>
+            <button class="filter-btn" data-filter="done">✅ 已解锁</button>
+            <button class="filter-btn" data-filter="todo">🔒 未解锁</button>
+        </div>
+
+        <div class="section-label" id="listLabel">—— 成就列表 ——</div>
+
+        <!-- ===== 成就列表 ===== -->
+        <div class="achieve-list" id="achieveList"></div>
+
+        <!-- ===== 空状态 ===== -->
+        <div class="empty-state" id="emptyState">
+            <div class="icon">🎯</div>
+            <p>还没有成就记录</p>
+        </div>
+
+        <!-- ===== 提示弹窗 ===== -->
+        <div class="toast" id="toast"></div>
+    </div>
+
+    <script>
+        // =============================================
+        // 📦 预设成就数据库（名称、条件、完成率）
+        // =============================================
+        const PRESET_ACHIEVEMENTS = [
+            { name: '🎓 学有所成！', desc: '成功通过高等教育，拿到大学毕业证书', rate: 38 },
+            { name: '💼 职场新星', desc: '顺利通过面试，拿到第一份正式工作 offer', rate: 72 },
+            { name: '🏠 安居乐业', desc: '靠自己努力拥有属于自己的房子', rate: 22 },
+            { name: '🚗 一路顺风', desc: '考取驾照，安全驾驶满一年', rate: 55 },
+            { name: '💍 执子之手', desc: '找到人生伴侣，步入婚姻殿堂', rate: 65 },
+            { name: '👶 新生命的礼物', desc: '迎接一个新生命来到这个世界', rate: 48 },
+            { name: '🌍 环游世界', desc: '去超过10个不同的国家旅行', rate: 8 },
+            { name: '🏔️ 登峰造极', desc: '成功登顶一座海拔5000米以上的雪山', rate: 3 },
+            { name: '📚 博览群书', desc: '一年内读完50本书并写下心得', rate: 6 },
+            { name: '💰 第一桶金', desc: '通过自己的努力攒到第一个10万元', rate: 35 },
+            { name: '🏃 挑战极限', desc: '完成一次全程马拉松（42.195公里）', rate: 2 },
+            { name: '🎸 多才多艺', desc: '学会一门乐器并能完整弹奏一首曲子', rate: 15 },
+            { name: '🌊 乘风破浪', desc: '学会游泳并成功横渡一次河流或湖泊', rate: 12 },
+            { name: '🎤 一展歌喉', desc: '在100人以上的场合登台表演一次', rate: 9 },
+            { name: '📸 光影大师', desc: '用相机记录下一年四季的美景并办展', rate: 1 },
+            { name: '🍳 美食家', desc: '学会做20道拿手好菜，能独立宴请一桌客人', rate: 18 },
+            { name: '🧘 内心平静', desc: '坚持冥想100天，每天不少于15分钟', rate: 5 },
+            { name: '💪 脱胎换骨', desc: '坚持健身一年，体脂率达到健康标准', rate: 7 },
+            { name: '🌱 种树育人', desc: '亲手种下一棵树并见证它成长三年以上', rate: 14 },
+            { name: '🎯 自律达人', desc: '连续365天坚持早起（7点前起床）', rate: 4 },
+            { name: '✈️ 蓝天之约', desc: '体验一次滑翔伞或跳伞', rate: 3 },
+            { name: '🤿 海底探秘', desc: '考取潜水证，探索海底世界', rate: 2 },
+            { name: '📝 书写人生', desc: '坚持写日记超过1000天', rate: 1 },
+            { name: '🎓 终身学习', desc: '工作后考取一个含金量高的专业证书', rate: 16 },
+            { name: '🏆 巅峰时刻', desc: '在某个领域获得省级以上奖项', rate: 5 },
+            { name: '🌟 极光之梦', desc: '在北极圈内亲眼看到一次极光', rate: 2 },
+            { name: '🎪 热血青春', desc: '去现场看一次偶像的演唱会', rate: 28 },
+            { name: '🚴 千里之行', desc: '完成一次超过100公里的长途骑行', rate: 4 },
+            { name: '🏕️ 星空露营', desc: '在野外露营一次，看满天繁星', rate: 20 },
+            { name: '🎨 妙笔生花', desc: '完成一幅自己满意的绘画或书法作品', rate: 11 },
+        ];
+
+//=============================================
+        // 📊 数据
+//=============================================
+        let achievements = JSON.parse(localStorage.getItem('achievement_system')) || [];
+        let filterMode = 'all';
+
+//=============================================
+        // 🔧 DOM
+//=============================================
+        const achieveList = document.getElementById('achieveList');
+        const emptyState = document.getElementById('emptyState');
+        const inputName = document.getElementById('inputName');
+        const inputDesc = document.getElementById('inputDesc');
+        const inputRate = document.getElementById('inputRate');
+        const addCustomBtn = document.getElementById('addCustomBtn');
+        const presetGrid = document.getElementById('presetGrid');
+        const overallPct = document.getElementById('overallPct');
+        const overallBar = document.getElementById('overallBar');
+        const doneTotal = document.getElementById('doneTotal');
+        const todoTotal = document.getElementById('todoTotal');
+        const grandTotal = document.getElementById('grandTotal');
+        const rankDisplay = document.getElementById('rankDisplay');
+        const listLabel = document.getElementById('listLabel');
+        const toast = document.getElementById('toast');
+
+        // =============================================
+        // 🛠️ 工具函数
+        // =============================================
+函数getNowStr(){
+const d=新日期()；
+返回'${d.getFullYear()}年${d.getMonth()+1}月${d.GETDATE()}日'；
+        }
+
+函数escHtml(t){
+Const el=document.createElement('span')；
+el.textContent=t；
+return el.innerHTML；
+        }
+
+//吐司提示
+设toastTimer=null；
+函数showToast(msg，isGood=true){
+toast.textContent=msg；
+toast.style.background=isGood
+？'rgba(76，175，80，0.95)'
+：'rgba(255，82，82，0.95)'；
+toast.classList.add('show')；
+clearTimeout(toastTimer)；
+toastTimer=setTimeout(()=>toast.classList.remove('show')，2500)；
+        }
+
+// 获取等级
+函数getRank(pct){
+if(pct>=80)返回'🌟 传说'；
+if(pct>=60)return'🏅黄金'；
+if(pct>=40)返回‘🥈 白银’；
+if(pct>=20)返回'🥉 青铜'；
+return'🌱新手'；
+        }
+
+//=============================================
+// 🎨 渲染
+//=============================================
+函数render(){
+const total=成就.长度；
+Const done=resultations.filter(a=>a.completed).length；
+Const todo=total-done；
+Const pct=total======0？0:Math.round((完成/总计)*100)；
+
+// 统计
+overallPct.textContent=pct+"%"；
+overallBar.style.width=pct+'%'；
+doneTotal.textContent=完成；
+todoTotal.textContent=todo；
+grandTotal.textContent=total；
+rankDisplay.textContent=getRank(pct)；
+
+// 筛选
+设filtered=results；
+if(FILTERMODE==='done')filtered=resultations。filter(a=>a.完成)；
+其他if(FILTERMODE==='todo')筛选=结果。筛选(a=>！一个。完成)；
+
+// 空状态
+emptyState.style.display=(total====0)？'Block'：'none'；
+
+// 标题
+常量标签={all：'--全部成就--'，完成时间：'--已解锁 ✅ --'，todo：'--未解锁 🔒 --'}；
+listLabel.textContent=标签[FILTERMODE]||'--成就--'；
+
+// 渲染列表
+accieveList.innerHTML=已筛选。映射((item，idx)=>{
+Const realIdx=resultations.indexOf(item)；
+常数费率=项目。费率||0；
+返回'
+<div class="accieve-card${item.completed？'完成'："}"data-index="${realIdx}">
+<div class="卡顶">
+<div class="奖杯图标">${item.completed？'🏆'：'🏅'}</div>
+<div class="卡内容">
+<div class="accieve-name">${escHtml(item.name)}</div>
+<div class="accieve-condition">📖 ${escHtml(项目。DESC||'暂无描述')}</div>
+</div>
+</div>
+<div class="card-bottom">
+<div class="完成率">
+<span class="rate-text">🏆 <span class="pct-num">${rate}%</span>的玩家已完成该成就</span>
+<div class="rate-bar-wrap">
+<div class="rate-fill"style="width：${rate}%；"></div>
+</div>
+</div>
+<div class="card-actions">
+<span class="状态标签${item.completed？'Done'：'todo'}">
+${item.completed？'✅ 已解锁'：'🔒 未解锁'}
+</span>
+<button class="mark-btn${item。完成？'undo'：'complete'}"data-index="${realIdx}">
+${item.completed？'彷徨撤回'：'✓ 标记完成‘}
+</button>
+<按钮class="delete-btn"data-index="${realIdx}">✕</button>
+</div>
+</div>
+</div>
+`;
+}).join(")；
+        }
+
+//=============================================
+//💾数据操作
+//=============================================
+函数save(){
+localStorage.setItem('成就_系统'，JSON.stringify(成就))；
+        }
+
+        // 添加成就
+函数addAchievement(名称、描述、速率){
+如果(！name||！name.trim()){showToast('请输入成就名称！'，false)；返回false；}
+if(成就.some(a=>a.name===name.trim())){
+showToast('这个成就已经存在啦！'，false)；
+返回false；
+            }
+成就.推({
+name:name.trim()，
+说明：(desc||").Trim()||'暂无描述'，
+速率：Math.min(100，Math.max(0，parseInt(速率)||0))，
+已完成：false，
+doneTime：空，
+addTime:getNowStr()，
+            });
+节省()；
+提供()；
+showtoast('✅成就"${name.trim()}”已添加！‘）；
+返回true；
+        }
+
+        // 切换完成
+函数toggleAchieve(index){
+Const项目=成就[指标]；
+if(项){
+item.completed=！item.completed；
+item.doneTime=item。是否完成？getNowStr()：空；
+节省()；
+提供()；
+if(item.completed){
+showToast('🏆 成就"${item.name}"已解锁！太棒了！‘)；
+}else{
+showToast('∀已撤回"${item.name}"')；
+                }
+            }
+        }
+
+// 删除
+函数deleteAchieve(index){
+Const项目=成就[指标]；
+if(项目&&确认(‘确定要删除成就"${item.name}"吗？‘)){
+成就.拼接(索引，1)；
+节省()；
+提供()；
+showToast(‘已删除"${item.name}"')；
+            }
+        }
+
+//=============================================
+//🎯托管成就渲染染
+//=============================================
+函数renderPresets(){
+presetGrid。innerHTML=PRESET_ACHIEVEMENTS.Map(a=>'
+<div class="预设项目"data-name="${escHtml(a.name)}"data-desc="${escHtml(a.说明)}"数据速率="${a.比率}">
+<div class="p-name">${escHtml(a.name)}</div>
+<div class="p-rate">🏆 ${a.rate}%已完成</div>
+</div>
+').join(")；
+        }
+
+//=============================================
+//🔗事件定
+//=============================================
+
+        // 自定义添加
+addCustomBtn.addEventListener('click'，()=>{
+addAchievement(inputName.value，inputDesc.value，inputRate.value)；
+if(inputName.value.trim()){
+inputName.value="；
+inputDesc.value="；
+inputRate.value="；
+inputName.focus()；
+if(FILTERMODE==='done'){
+FILTERMODE='all'；
+文件。querySelectorAll('.filter-btn')。foreach(b=>b.classList.remove('active'))；
+文件。querySelector('[data-filter="all"]').classList。添加('active')；
+                }
+提供()；
+            }
+        });
+
+// 回车快速添加
+inputName.addEventListener('keydown'，(e)=>{
+if(e.key==='Enter')addCustomBtn.click()；
+        });
+
+        // 预设点击添加
+presetGrid.addEventListener('click'，(e)=>{
+Const item=e.target.closest('.preset-item')；
+if(项){
+addAchievement(项目。数据集。名称，项目。数据集。描述，项目。数据集。比率)；
+if(FILTERMODE==='done'){
+FILTERMODE='all'；
+文件。querySelectorAll('.filter-btn')。foreach(b=>b.classList.remove('active'))；
+文件。querySelector('[data-filter="all"]').classList。添加('active')；
+                }
+提供()；
+            }
+});
